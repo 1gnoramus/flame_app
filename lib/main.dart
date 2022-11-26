@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flame/flame.dart';
 
 void main() {
-  print('sad');
   runApp(
     GameWidget(
       game: MyGame(),
@@ -18,14 +17,18 @@ class MyGame extends FlameGame with HasTappables {
   SpriteComponent queen = SpriteComponent();
   SpriteComponent knight = SpriteComponent();
   SpriteComponent background = SpriteComponent();
+  SpriteComponent background_2 = SpriteComponent();
+
   DialogButton dialogButton = DialogButton();
   Vector2 buttonSize = Vector2(50.0, 50.0);
 
   final double characterSize = (200);
   bool turnAway = false;
   int dialogLevel = 0;
+  int sceneLevel = 1;
 
   TextPaint dialogTextPaint = TextPaint(style: const TextStyle(fontSize: 30));
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
@@ -33,6 +36,11 @@ class MyGame extends FlameGame with HasTappables {
     final screenWidth = size[0];
     final screenHeight = size[1];
     final textBoxHeight = 100;
+
+    background_2
+      ..sprite = await loadSprite('bg_2.jpg')
+      ..size = Vector2(size[0], size[1] - textBoxHeight);
+
     add(
       background
         ..sprite = await loadSprite('background_1.jpg')
@@ -72,14 +80,14 @@ class MyGame extends FlameGame with HasTappables {
       if (queen.x > 150 && dialogLevel == 1) {
         dialogLevel++;
       }
-    } else if (turnAway == false) {
+    } else if (turnAway == false && sceneLevel == 1) {
       knight.flipHorizontally();
       turnAway = true;
       if (dialogLevel == 2) {
         dialogLevel++;
       }
     }
-    if (knight.x > size[0] / 2 - 50) {
+    if (knight.x > size[0] / 2 - 50 && sceneLevel == 1) {
       knight.x -= 60 * dt;
     }
   }
@@ -102,14 +110,46 @@ class MyGame extends FlameGame with HasTappables {
             canvas, 'NOCHEAS: Wo ye hao!', Vector2(10, size[1] - 100));
         break;
     }
+    switch (dialogButton.scene2Level) {
+      case 1:
+        sceneLevel = 2;
+        canvas.drawRect(Rect.fromLTWH(0, size[1] - 100, size[0] - 60, 100),
+            Paint()..color = Colors.black);
+        dialogTextPaint.render(canvas, 'MENOS: Learning chinese, aye?',
+            Vector2(10, size[1] - 100));
+        if (turnAway) {
+          knight.flipHorizontally();
+          knight.x = knight.x + 150;
+          turnAway = false;
+
+          add(background_2);
+          queen.changeParent(background_2);
+          knight.changeParent(background_2);
+        }
+        break;
+      case 2:
+        canvas.drawRect(Rect.fromLTWH(0, size[1] - 100, size[0] - 60, 100),
+            Paint()..color = Colors.black);
+        dialogTextPaint.render(canvas, 'NOCHEAS: Yeap. How could i forget?',
+            Vector2(10, size[1] - 100));
+        break;
+      case 3:
+        canvas.drawRect(Rect.fromLTWH(0, size[1] - 100, size[0] - 60, 100),
+            Paint()..color = Colors.black);
+        dialogTextPaint.render(canvas, 'MENOS: Translate this then: \'我爱您\'',
+            Vector2(10, size[1] - 100));
+        break;
+    }
   }
 }
 
 class DialogButton extends SpriteComponent with Tappable {
+  int scene2Level = 0;
   @override
   bool onTapDown(TapDownInfo event) {
     try {
       print('next screen');
+      scene2Level += 1;
       return true;
     } catch (e) {
       print(e);
